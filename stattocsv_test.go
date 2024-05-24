@@ -3,7 +3,7 @@ package datareader
 import (
 	"crypto/md5"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,7 +17,7 @@ func runStattocsv(filenames []string) map[string][16]byte {
 
 	checksums := make(map[string][16]byte)
 
-	cmdName := filepath.Join(os.Getenv("GOBIN"), "stattocsv")
+	cmdName := "./stattocsv"
 	for _, file := range filenames {
 		infile := filepath.Join("test_files", "data", file)
 		args := []string{infile}
@@ -52,14 +52,14 @@ func refChecksums(filenames []string) map[string][16]byte {
 			if err != nil {
 				panic(err)
 			}
-			b, err = ioutil.ReadAll(fid)
+			b, err = io.ReadAll(fid)
 			if err != nil {
 				panic(err)
 			}
 		} else if err != nil {
 			panic(err)
 		} else {
-			b, err = ioutil.ReadAll(fid)
+			b, err = io.ReadAll(fid)
 			if err != nil {
 				panic(err)
 			}
@@ -73,7 +73,7 @@ func refChecksums(filenames []string) map[string][16]byte {
 
 func getFilenames() []string {
 
-	files, err := ioutil.ReadDir(filepath.Join("test_files", "data"))
+	files, err := os.ReadDir(filepath.Join("test_files", "data"))
 	if err != nil {
 		panic(err)
 	}

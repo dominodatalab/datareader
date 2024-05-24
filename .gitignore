@@ -1,0 +1,38 @@
+# Mac OS X files
+.DS_Store
+
+# Binaries for programs and plugins
+main
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Test data that was generated
+test/data/*.yaml
+test/data/*.json
+test_files/tmp
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+coverage/
+*.out
+
+# Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
+.glide/
+
+# Visual Studio - .env for go.testEnvFile - see https://github.com/golang/vscode-go/wiki/settings#gotestenvfile
+.env
+.vscode/
+
+# IDEA
+*.iml
+.idea/
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+columnize
+stattocsv
