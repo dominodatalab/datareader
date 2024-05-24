@@ -16,8 +16,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"log"
 	"math"
-	"os"
 	"strings"
 	"time"
 
@@ -346,7 +346,7 @@ func rle_decompress(result_length int, inbuff []byte) ([]byte, error) {
 		inbuff = inbuff[1:]
 		if control_byte == 0x00 {
 			if end_of_first_byte != 0 {
-				os.Stderr.WriteString("Unexpected non-zero end_of_first_byte\n")
+				log.Default().Print("Unexpected non-zero end_of_first_byte\n")
 			}
 			nbytes := int(inbuff[0]) + 64
 			inbuff = inbuff[1:]
@@ -417,7 +417,7 @@ func rle_decompress(result_length int, inbuff []byte) ([]byte, error) {
 	}
 
 	if len(result) != result_length {
-		os.Stderr.WriteString(fmt.Sprintf("RLE: %v != %v\n", len(result), result_length))
+		log.Default().Printf("RLE: %v != %v\n", len(result), result_length)
 	}
 
 	return result, nil
@@ -490,7 +490,7 @@ func rdc_decompress(result_length int, inbuff []byte) ([]byte, error) {
 	}
 
 	if len(outbuff) != result_length {
-		os.Stderr.WriteString(fmt.Sprintf("RDC: %v != %v\n", len(outbuff), result_length))
+		log.Default().Printf("RDC: %v != %v\n", len(outbuff), result_length)
 	}
 
 	return outbuff, nil
@@ -987,7 +987,7 @@ func (sas *SAS7BDAT) getProperties() error {
 		return fmt.Errorf("Unable to read header size\n")
 	}
 	if sas.U64 && prop.headerLength != 8192 {
-		os.Stderr.WriteString(fmt.Sprintf("header length %d != 8192\n", prop.headerLength))
+		log.Default().Printf("header length %d != 8192\n", prop.headerLength)
 	}
 
 	// Read the rest of the header into cachedPage.
@@ -1316,9 +1316,8 @@ func (sas *SAS7BDAT) processColumnsizeSubheader(offset, length int) error {
 		return err
 	}
 	if sas.properties.colCountP1+sas.properties.colCountP2 != sas.properties.columnCount {
-		msg := fmt.Sprintf("Warning: column count mismatch (%d + %d != %d)\n",
+		log.Default().Printf("Warning: column count mismatch (%d + %d != %d)\n",
 			sas.properties.colCountP1, sas.properties.colCountP2, sas.properties.columnCount)
-		os.Stderr.WriteString(msg)
 	}
 
 	return nil
