@@ -20,7 +20,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/kshedden/datareader"
+	"github.com/dominodatalab/datareader"
 )
 
 const (
@@ -35,7 +35,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/kshedden/datareader"
+	"github.com/dominodatalab/datareader"
 	"{{ .Importpath}}/{{ .Pkgname }}"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/parquet"
