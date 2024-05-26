@@ -54,7 +54,8 @@ test: fmt lint test-all
 .PHONY: test-coverage
 test-coverage: build ## Run all tests and generate a coverage report
 	$(touch .env)
-	gotestsum --format=pkgname-and-test-fails --format-hivis -- -covermode=count -coverpkg=./... -coverprofile=coverage/cover.out.tmp -v  ./... --tags="unit"
+	mkdir -p $(SRC_DIR)coverage
+	gotestsum --format=pkgname-and-test-fails --format-hivis --junitfile test/unit-tests.xml -- -covermode=count -coverpkg=./... -coverprofile=coverage/cover.out.tmp -v  ./... --tags="unit"
 
 	# Stripping out API docs and internal/app/mocks from the coverage report
 	cat coverage/cover.out.tmp | grep -v "api/docs.go" | grep -v "mock_" > coverage/cover.out
