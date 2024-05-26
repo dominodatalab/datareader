@@ -6,6 +6,7 @@ package main
 // (e.g. it may be the number of days since January 1, 1960).
 
 import (
+	"encoding/csv"
 	"fmt"
 	"os"
 	"strings"
@@ -61,5 +62,8 @@ func main() {
 		rdr = stata
 	}
 
-	datareader.DoConversion(rdr)
+	err = datareader.ToCsv(rdr, 1000, csv.NewWriter(os.Stdout))
+	if err != nil {
+		panic(err)
+	}
 }

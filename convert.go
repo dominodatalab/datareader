@@ -2,28 +2,25 @@ package datareader
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
-	"os"
 	"time"
 )
 
-func DoConversion(rdr StatfileReader) {
-
-	w := csv.NewWriter(os.Stdout)
-
+func ToCsv(rdr StatfileReader, rows int, w *csv.Writer) error {
 	ncol := len(rdr.ColumnNames())
 	if err := w.Write(rdr.ColumnNames()); err != nil {
-		panic(err)
+		return err
 	}
 
 	row := make([]string, ncol)
 
 	for {
-		chunk, err := rdr.Read(1000)
-		if err != nil && err != io.EOF {
-			panic(err)
-		} else if chunk == nil || err == io.EOF {
+		chunk, err := rdr.Read(rows)
+		if err != nil && !errors.Is(err, io.EOF) {
+			return err
+		} else if chunk == nil || errors.Is(err, io.EOF) {
 			break
 		}
 
@@ -39,7 +36,7 @@ func DoConversion(rdr StatfileReader) {
 
 		missing := make([][]bool, ncol)
 
-		for j := 0; j < ncol; j++ {
+		for j := range ncol {
 			missing[j] = chunk[j].Missing()
 			dcol := chunk[j].Data()
 			switch v := dcol.(type) {
@@ -50,37 +47,39 @@ func DoConversion(rdr StatfileReader) {
 			case []string:
 				stringcols[j] = v
 			default:
-				panic(fmt.Sprintf("unknown type: %T", dcol))
+				return fmt.Errorf("unknown type: %T", dcol)
 			}
 		}
 
 		for i := range nrow {
 			for j := range ncol {
-				if numbercols[j] != nil {
+				switch {
+				case numbercols[j] != nil:
 					if missing[j] == nil || !missing[j][i] {
 						row[j] = fmt.Sprintf("%f", numbercols[j][i])
 					} else {
 						row[j] = ""
 					}
-				} else if stringcols[j] != nil {
+				case stringcols[j] != nil:
 					if missing[j] == nil || !missing[j][i] {
 						row[j] = stringcols[j][i]
 					} else {
 						row[j] = ""
 					}
-				} else if timecols[j] != nil {
+				case timecols[j] != nil:
 					if missing[j] == nil || !missing[j][i] {
-						row[j] = fmt.Sprintf("%v", timecols[j][i])
+						row[j] = timecols[j][i].String()
 					} else {
 						row[j] = ""
 					}
 				}
 			}
-			if err := w.Write(row); err != nil {
-				panic(err)
+			if werr := w.Write(row); werr != nil {
+				return werr
 			}
 		}
 	}
 
 	w.Flush()
+	return nil
 }
