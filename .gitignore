@@ -8,6 +8,9 @@ main
 *.dll
 *.so
 *.dylib
+./columnize
+./stattocsv
+
 
 # Test binary, build with `go test -c`
 *.test
@@ -34,5 +37,3 @@ coverage/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-columnize
-stattocsv
