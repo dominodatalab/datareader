@@ -1,0 +1,53 @@
+name: test
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@main
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+    - name: Install dependencies
+      run: make common-deps
+    - name: Run tests
+      run: make test-coverage
+    - name: Archive test and code coverage results
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+            test/*.xml
+            **/cover.out
+    - name: Produce Summary Report
+      if: always()    # run this step even if previous step failed
+      uses: phoenix-actions/test-reporting@v15
+      with:
+        name: report
+        path: test/*.xml
+        reporter: java-junit
+        output-to: 'step-summary'
+
+  coverage:
+    name: code coverage
+    if: github.event_name == 'pull_request' # Do not run when workflow is triggered by push to main branch
+    runs-on: ubuntu-latest
+    needs: test # Depends on the artifact uploaded by the "test" job
+    steps:
+    - uses: fgrosse/go-coverage-report@v1.0.1
+      with:
+        coverage-artifact-name: "test-results" # can be omitted if you used this default value
+        coverage-file-name: "coverage/cover.out"
+      continue-on-error: true
