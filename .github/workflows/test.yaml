@@ -27,9 +27,9 @@ jobs:
     - name: Archive test and code coverage results
       uses: actions/upload-artifact@v4
       with:
-        name: test-results
+        # NOTE: do not change this or it will break the coverage report
+        name: coverage-results
         path: |
-            test/*.xml
             **/cover.out
     - name: Produce Summary Report
       if: always()    # run this step even if previous step failed
@@ -48,6 +48,6 @@ jobs:
     steps:
     - uses: fgrosse/go-coverage-report@v1.0.1
       with:
-        coverage-artifact-name: "test-results" # can be omitted if you used this default value
+        coverage-artifact-name: "coverage-results" # can be omitted if you used this default value
         coverage-file-name: "coverage/cover.out"
       continue-on-error: true
