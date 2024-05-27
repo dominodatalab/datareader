@@ -78,6 +78,11 @@ func ToCsv(rdr StatfileReader, rows int, w *csv.Writer) error {
 				return werr
 			}
 		}
+
+		// less rows came back than requested, so might be premature end to file
+		if nrow < rows {
+			break
+		}
 	}
 
 	w.Flush()

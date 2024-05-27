@@ -114,12 +114,9 @@ func TestToCsvConvertsTruncatedSAS(t *testing.T) {
 	// there are 46641 records in the file, but b/c the file is truncated there are only 2605 parsed rows
 	// do a sanity check on the last correctly read row
 	assert.Equal(t, []string{"62", "2", "1500.000000", "", "", "186336030133"}, records[2604])
-	// also show that the following row *and* the last row in the sequence are garbage
-	assert.Equal(t, []string{"", "", "0.000000", "", "", ""}, records[2605])
-	assert.Equal(t, []string{"", "", "0.000000", "", "", ""}, records[47604])
 
-	// NOTE: it's bizarre that the garbage data includes extra rows, but documented in the test to reflect reality
-	assert.Equal(t, 47605, len(records))
+	// NOTE: bugfix shows that only the rows that could be read are captured in the file - the write aborts once it reaches incomplete data
+	assert.Equal(t, 2605, len(records))
 }
 
 func TestToCsvConvertsStata(t *testing.T) {
