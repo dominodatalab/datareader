@@ -686,8 +686,7 @@ func (ser *Series) AsFloat64Slice() ([]float64, []bool, error) {
 
 	v, ok := ser.data.([]float64)
 	if !ok {
-		msg := fmt.Sprintf("can't convert %T to []float64", ser.data)
-		return nil, nil, fmt.Errorf(msg)
+		return nil, nil, fmt.Errorf("can't convert %T to []float64", ser.data)
 	}
 
 	return v, ser.missing, nil
@@ -699,8 +698,7 @@ func (ser *Series) AsUint64Slice() ([]uint64, []bool, error) {
 
 	v, ok := ser.data.([]uint64)
 	if !ok {
-		msg := fmt.Sprintf("can't convert %T to []uint64", ser.data)
-		return nil, nil, fmt.Errorf(msg)
+		return nil, nil, fmt.Errorf("can't convert %T to []uint64", ser.data)
 	}
 
 	return v, ser.missing, nil
@@ -712,8 +710,7 @@ func (ser *Series) AsStringSlice() ([]string, []bool, error) {
 
 	v, ok := ser.data.([]string)
 	if !ok {
-		msg := fmt.Sprintf("can't convert %T to []string", ser.data)
-		return nil, nil, fmt.Errorf(msg)
+		return nil, nil, fmt.Errorf("can't convert %T to []string", ser.data)
 	}
 
 	return v, ser.missing, nil
