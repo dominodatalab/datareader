@@ -28,14 +28,18 @@ func doSplit(rdr datareader.StatfileReader, colDir string, mode string) {
 	// Create a file to contain the column names
 	cf, err := os.Create(filepath.Join(colDir, "columns.txt"))
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("unable to create file in %s: %v\n", colDir, err))
+		fmt.Fprintf(os.Stderr, "unable to create file in %s: %v\n", colDir, err)
 		return
 	}
-	defer cf.Close()
+	defer func() {
+		if err := cf.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "unable to close file in %s: %v\n", colDir, err)
+		}
+	}()
 
 	// Write the column names
 	for i, c := range rdr.ColumnNames() {
-		if _, err := cf.WriteString(fmt.Sprintf("%d,%s\n", i, c)); err != nil {
+		if _, err := fmt.Fprintf(cf, "%d,%s\n", i, c); err != nil {
 			panic(err)
 		}
 	}
@@ -45,9 +49,13 @@ func doSplit(rdr datareader.StatfileReader, colDir string, mode string) {
 		fn := filepath.Join(colDir, fmt.Sprintf("%d", j))
 		f, err := os.Create(fn)
 		if err != nil {
-			os.Stderr.WriteString(fmt.Sprintf("unable to create file for column %d: %v\n", j, err))
+			fmt.Fprintf(os.Stderr, "unable to create file for column %d: %v\n", j, err)
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				fmt.Fprintf(os.Stderr, "unable to close file %s: %v\n", fn, err)
+			}
+		}()
 
 		columns[j] = f
 	}
@@ -91,7 +99,7 @@ func doSplit(rdr datareader.StatfileReader, colDir string, mode string) {
 				case "text":
 					for i, x := range vec {
 						if missing[j] == nil || !missing[j][i] {
-							if _, err := columns[j].Write([]byte(fmt.Sprintf("%v\n", x))); err != nil {
+							if _, err := fmt.Fprintf(columns[j], "%v\n", x); err != nil {
 								panic(err)
 							}
 						} else {
@@ -120,7 +128,7 @@ func doSplit(rdr datareader.StatfileReader, colDir string, mode string) {
 func main() {
 
 	if len(os.Args) != 4 {
-		os.Stderr.WriteString(fmt.Sprintf("usage: %s -in=file -out=directory -mode=[text|binary]\n", os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s -in=file -out=directory -mode=[text|binary]\n", os.Args[0])
 		return
 	}
 
@@ -131,7 +139,7 @@ func main() {
 	flag.Parse()
 
 	if (*mode != "text") && (*mode != "binary") {
-		os.Stderr.WriteString("mode must be either 'text' or 'binary'\n")
+		_, _ = os.Stderr.WriteString("mode must be either 'text' or 'binary'\n")
 		return
 	}
 
@@ -142,27 +150,32 @@ func main() {
 	} else if strings.HasSuffix(fl, "dta") {
 		filetype = "stata"
 	} else {
-		os.Stderr.WriteString(fmt.Sprintf("%s file cannot be read", *infile))
+		fmt.Fprintf(os.Stderr, "%s file cannot be read", *infile)
 		return
 	}
 
 	r, err := os.Open(*infile)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("unable to open %s\n", *infile))
+		fmt.Fprintf(os.Stderr, "unable to open %s\n", *infile)
 	}
-	defer r.Close()
+	defer func() {
+		if err := r.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "unable to close file %s: %v\n", *infile, err)
+		}
+	}()
 
 	var rdr datareader.StatfileReader
-	if filetype == "sas" {
+	switch filetype {
+	case "sas":
 		rdr, err = datareader.NewSAS7BDATReader(r)
 		if err != nil {
-			os.Stderr.WriteString(fmt.Sprintf("unable to open SAS file: %v\n", err))
+			fmt.Fprintf(os.Stderr, "unable to open SAS file: %v\n", err)
 			return
 		}
-	} else if filetype == "stata" {
+	case "stata":
 		rdr, err = datareader.NewStataReader(r)
 		if err != nil {
-			os.Stderr.WriteString(fmt.Sprintf("unable to open Stata file: %v\n", err))
+			fmt.Fprintf(os.Stderr, "unable to open Stata file: %v\n", err)
 			return
 		}
 	}

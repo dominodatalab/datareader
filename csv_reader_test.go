@@ -11,13 +11,13 @@ func TestCSV1(t *testing.T) {
 
 	file, err := os.Open(filepath.Join("test_files", "data", "testcsv1.csv"))
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		t.Fail()
 	}
 	rdr := NewCSVReader(file)
 	data, err := rdr.Read(-1)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		t.Fail()
 	}
 
@@ -36,14 +36,14 @@ func TestCSV2(t *testing.T) {
 
 	file, err := os.Open(filepath.Join("test_files", "data", "testcsv2.csv"))
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		t.Fail()
 	}
 	rdr := NewCSVReader(file)
 	rdr.HasHeader = false
 	data, err := rdr.Read(-1)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		t.Fail()
 	}
 
@@ -62,7 +62,7 @@ func TestCSV3(t *testing.T) {
 
 	file, err := os.Open(filepath.Join("test_files", "data", "testcsv2.csv"))
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		t.Fail()
 	}
 
@@ -71,7 +71,7 @@ func TestCSV3(t *testing.T) {
 	rdr.SkipRows = 2
 	data, err := rdr.Read(-1)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		t.Fail()
 	}
 
@@ -90,7 +90,7 @@ func TestCSV4(t *testing.T) {
 
 	file, err := os.Open(filepath.Join("test_files", "data", "testcsv2.csv"))
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		t.Fail()
 	}
 
@@ -103,7 +103,7 @@ func TestCSV4(t *testing.T) {
 
 	data, err := rdr.Read(-1)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		t.Fail()
 	}
 
@@ -123,7 +123,7 @@ func TestRaggedCSV(t *testing.T) {
 
 	file, err := os.Open(filepath.Join("test_files", "data", "testcsv3.csv"))
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		t.Fail()
 	}
 
@@ -132,7 +132,7 @@ func TestRaggedCSV(t *testing.T) {
 
 	data, err := rdr.Read(-1)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		t.Fail()
 	}
 	for j := 0; j < len(data); j++ {

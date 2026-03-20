@@ -122,10 +122,8 @@ func (rdr *CSVReader) rectifyLines() {
 	}
 
 	for _, line := range rdr.lines {
-		for {
-			if len(line) >= mx {
-				break
-			}
+		for len(line) < mx {
+
 			line = append(line, "")
 		}
 	}
@@ -224,10 +222,7 @@ func (rdr *CSVReader) Read(lines int) ([]*Series, error) {
 		rdr.miss[j] = make([]bool, 0, 100)
 	}
 
-	for {
-		if lines > 0 && rdr.numRows >= lines {
-			break
-		}
+	for lines <= 0 || rdr.numRows < lines {
 
 		var line []string
 		var err error

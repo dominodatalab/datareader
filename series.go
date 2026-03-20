@@ -52,7 +52,7 @@ func ilen(data interface{}) (int, error) {
 	case []time.Time:
 		return len(v), nil
 	default:
-		return 0, fmt.Errorf("Unknown data type")
+		return 0, fmt.Errorf("unknown data type")
 	}
 }
 

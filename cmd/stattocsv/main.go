@@ -24,10 +24,14 @@ func main() {
 	fname := os.Args[1]
 	f, err := os.Open(fname)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "unable to close file %s: %v\n", fname, err)
+		}
+	}()
 
 	// Determine the file type
 	fl := strings.ToLower(fname)
@@ -37,13 +41,14 @@ func main() {
 	} else if strings.HasSuffix(fl, "dta") {
 		filetype = "stata"
 	} else {
-		os.Stderr.WriteString(fmt.Sprintf("%s file cannot be read", fname))
+		fmt.Fprintf(os.Stderr, "%s file cannot be read", fname)
 		return
 	}
 
 	// Get a reader for either a Stata or SAS file
 	var rdr datareader.StatfileReader
-	if filetype == "sas" {
+	switch filetype {
+	case "sas":
 		sas, err := datareader.NewSAS7BDATReader(f)
 		if err != nil {
 			panic(err)
@@ -51,7 +56,7 @@ func main() {
 		sas.ConvertDates = true
 		sas.TrimStrings = true
 		rdr = sas
-	} else if filetype == "stata" {
+	case "stata":
 		stata, err := datareader.NewStataReader(f)
 		if err != nil {
 			panic(err)

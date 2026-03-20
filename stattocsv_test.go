@@ -25,7 +25,7 @@ func runStattocsv(filenames []string) map[string][16]byte {
 		cmd.Stderr = os.Stderr
 		rslt, err := cmd.Output()
 		if err != nil {
-			os.Stderr.WriteString(fmt.Sprintf("runStattocsv:: %v %v\n", cmdName, infile))
+			fmt.Fprintf(os.Stderr, "runStattocsv:: %v %v\n", cmdName, infile)
 			panic(err)
 		}
 		checksums[file] = md5.Sum(rslt)
@@ -40,8 +40,8 @@ func refChecksums(filenames []string) map[string][16]byte {
 
 	for _, file := range filenames {
 
-		file1 := strings.Replace(file, ".dta", ".csv", -1)
-		file1 = strings.Replace(file1, ".sas7bdat", ".csv", -1)
+		file1 := strings.Replace(file, ".dta", ".csv", 1)
+		file1 = strings.Replace(file1, ".sas7bdat", ".csv", 1)
 
 		var b []byte
 

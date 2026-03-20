@@ -12,9 +12,10 @@ func sasBaseTest(fnameCSV, fnameSAS string, factorizeStrings bool) bool {
 
 	f, err := os.Open(filepath.Join("test_files", "data", fnameCSV))
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return false
 	}
+	//nolint:errcheck // test code doesn't need to check for Close() errors
 	defer f.Close()
 
 	// Read the whole CSV file
@@ -23,22 +24,23 @@ func sasBaseTest(fnameCSV, fnameSAS string, factorizeStrings bool) bool {
 	rt.TypeHintsName = map[string]string{"Column 1": "float64"}
 	dt, err := rt.Read(-1)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return false
 	}
 
 	// Open the SAS file
 	r, err := os.Open(filepath.Join("test_files", "data", fnameSAS))
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return false
 	}
+	//nolint:errcheck // test code doesn't need to check for Close() errors
 	defer r.Close()
 
 	// Set up the SAS reader
 	sas, err := NewSAS7BDATReader(r)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return false
 	}
 	sas.TrimStrings = true
@@ -67,7 +69,7 @@ func sasBaseTest(fnameCSV, fnameSAS string, factorizeStrings bool) bool {
 	// Read the whole SAS file
 	ds, err := sas.Read(-1)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%v\n", err))
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return false
 	}
 
@@ -116,11 +118,12 @@ func compare(ds, dt []*Series, sas *SAS7BDAT, stringFactorMap map[uint64]string)
 			fl, ix := ds[j].AllClose(dt[j], 1e-5)
 			if !fl {
 				fmt.Printf("Not equal:\nSAS:\n")
-				if ix == -1 {
+				switch ix {
+				case -1:
 					fmt.Printf("  Unequal lengths\n")
-				} else if ix == -2 {
+				case -2:
 					fmt.Printf("  Unequal types\n")
-				} else {
+				default:
 					fmt.Printf("  Unequal in column %d, row %d\n", j, ix)
 					ds[j].Print()
 					dt[j].Print()

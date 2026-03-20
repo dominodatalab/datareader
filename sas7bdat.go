@@ -344,7 +344,8 @@ func rle_decompress(result_length int, inbuff []byte) ([]byte, error) {
 		end_of_first_byte := int(inbuff[0] & 0x0F)
 
 		inbuff = inbuff[1:]
-		if control_byte == 0x00 {
+		switch control_byte {
+		case 0x00:
 			if end_of_first_byte != 0 {
 				log.Default().Print("Unexpected non-zero end_of_first_byte\n")
 			}
@@ -352,7 +353,7 @@ func rle_decompress(result_length int, inbuff []byte) ([]byte, error) {
 			inbuff = inbuff[1:]
 			result = append(result, inbuff[0:nbytes]...)
 			inbuff = inbuff[nbytes:]
-		} else if control_byte == 0x40 {
+		case 0x40:
 			// not documented
 			nbytes := end_of_first_byte * 16
 			nbytes += int(inbuff[0])
@@ -361,57 +362,57 @@ func rle_decompress(result_length int, inbuff []byte) ([]byte, error) {
 				result = append(result, inbuff[0])
 			}
 			inbuff = inbuff[1:]
-		} else if control_byte == 0x60 {
+		case 0x60:
 			nbytes := end_of_first_byte*256 + int(inbuff[0]) + 17
 			inbuff = inbuff[1:]
 			for k := 0; k < nbytes; k++ {
 				result = append(result, 0x20)
 			}
-		} else if control_byte == 0x70 {
+		case 0x70:
 			nbytes := end_of_first_byte*256 + int(inbuff[0]) + 17
 			inbuff = inbuff[1:]
 			for k := 0; k < nbytes; k++ {
 				result = append(result, 0x00)
 			}
-		} else if control_byte == 0x80 {
+		case 0x80:
 			nbytes := end_of_first_byte + 1
 			result = append(result, inbuff[0:nbytes]...)
 			inbuff = inbuff[nbytes:]
-		} else if control_byte == 0x90 {
+		case 0x90:
 			nbytes := end_of_first_byte + 17
 			result = append(result, inbuff[0:nbytes]...)
 			inbuff = inbuff[nbytes:]
-		} else if control_byte == 0xA0 {
+		case 0xA0:
 			nbytes := end_of_first_byte + 33
 			result = append(result, inbuff[0:nbytes]...)
 			inbuff = inbuff[nbytes:]
-		} else if control_byte == 0xB0 {
+		case 0xB0:
 			nbytes := end_of_first_byte + 49
 			result = append(result, inbuff[0:nbytes]...)
 			inbuff = inbuff[nbytes:]
-		} else if control_byte == 0xC0 {
+		case 0xC0:
 			nbytes := end_of_first_byte + 3
 			x := inbuff[0]
 			inbuff = inbuff[1:]
 			for k := 0; k < nbytes; k++ {
 				result = append(result, x)
 			}
-		} else if control_byte == 0xD0 {
+		case 0xD0:
 			nbytes := end_of_first_byte + 2
 			for k := 0; k < nbytes; k++ {
 				result = append(result, 0x40)
 			}
-		} else if control_byte == 0xE0 {
+		case 0xE0:
 			nbytes := end_of_first_byte + 2
 			for k := 0; k < nbytes; k++ {
 				result = append(result, 0x20)
 			}
-		} else if control_byte == 0xF0 {
+		case 0xF0:
 			nbytes := end_of_first_byte + 2
 			for k := 0; k < nbytes; k++ {
 				result = append(result, 0x00)
 			}
-		} else {
+		default:
 			return nil, fmt.Errorf("unknown control byte: %v", control_byte)
 		}
 	}
@@ -546,11 +547,11 @@ func (sas *SAS7BDAT) readBytes(offset, length int) error {
 		if err != nil {
 			return err
 		} else if n < length {
-			return fmt.Errorf("Unable to read %d bytes from file position %d.", length, offset)
+			return fmt.Errorf("unable to read %d bytes from file position %d", length, offset)
 		}
 	} else {
 		if offset+length > len(sas.cachedPage) {
-			return fmt.Errorf("The cached page is too small.")
+			return fmt.Errorf("the cached page is too small")
 		}
 		copy(sas.buf, sas.cachedPage[offset:offset+length])
 	}
@@ -937,11 +938,12 @@ func (sas *SAS7BDAT) getProperties() error {
 	if err != nil {
 		return err
 	}
-	if sas.buf[0] == '1' {
+	switch sas.buf[0] {
+	case '1':
 		sas.Platform = "unix"
-	} else if sas.buf[0] == '2' {
+	case '2':
 		sas.Platform = "windows"
-	} else {
+	default:
 		sas.Platform = "unknown"
 	}
 
@@ -984,7 +986,7 @@ func (sas *SAS7BDAT) getProperties() error {
 
 	prop.headerLength, err = sas.readInt(header_size_offset+align1, header_size_length)
 	if err != nil {
-		return fmt.Errorf("Unable to read header size\n")
+		return fmt.Errorf("unable to read header size")
 	}
 	if sas.U64 && prop.headerLength != 8192 {
 		log.Default().Printf("header length %d != 8192\n", prop.headerLength)
@@ -997,46 +999,46 @@ func (sas *SAS7BDAT) getProperties() error {
 	}
 	sas.cachedPage = append(sas.cachedPage, v...)
 	if len(sas.cachedPage) != prop.headerLength {
-		return fmt.Errorf("The SAS7BDAT file appears to be truncated.")
+		return fmt.Errorf("the SAS7BDAT file appears to be truncated")
 	}
 
 	prop.pageLength, err = sas.readInt(page_size_offset+align1, page_size_length)
 	if err != nil {
-		return fmt.Errorf("Unable to read the page size value.")
+		return fmt.Errorf("unable to read the page size value")
 	}
 	prop.pageCount, err = sas.readInt(page_count_offset+align1, page_count_length)
 	if err != nil {
-		return fmt.Errorf("Unable to read the page count value.")
+		return fmt.Errorf("unable to read the page count value")
 	}
 
 	err = sas.readBytes(sas_release_offset+total_align, sas_release_length)
 	if err != nil {
-		return fmt.Errorf("Unable to read SAS relase value.")
+		return fmt.Errorf("unable to read SAS relase value")
 	}
 	sas.SASRelease = string(sas.buf[0:sas_release_length])
 
 	err = sas.readBytes(sas_server_type_offset+total_align, sas_server_type_length)
 	if err != nil {
-		return fmt.Errorf("Unable to read SAS server type value.")
+		return fmt.Errorf("unable to read SAS server type value")
 	}
 	sas.ServerType = string(bytes.TrimRight(sas.buf[0:sas_server_type_length], " \000"))
 
 	err = sas.readBytes(os_version_number_offset+total_align, os_version_number_length)
 	if err != nil {
-		return fmt.Errorf("Unable to read version number.")
+		return fmt.Errorf("unable to read version number")
 	}
 	sas.OSType = string(bytes.TrimRight(sas.buf[0:os_version_number_length], "\000"))
 
 	err = sas.readBytes(os_name_offset+total_align, os_name_length)
 	if err != nil {
-		return fmt.Errorf("Unable to read OS name.")
+		return fmt.Errorf("unable to read OS name")
 	}
 	if sas.buf[0] != 0 {
 		sas.OSName = string(bytes.TrimRight(sas.buf[0:os_name_length], " \000"))
 	} else {
 		err = sas.readBytes(os_maker_offset+total_align, os_maker_length)
 		if err != nil {
-			return fmt.Errorf("Unable to read OS maker value.")
+			return fmt.Errorf("unable to read OS maker value")
 		}
 		sas.OSName = string(bytes.TrimRight(sas.buf[0:os_maker_length], " \000"))
 	}
@@ -1050,15 +1052,15 @@ func (sas *SAS7BDAT) readPageHeader() error {
 	var err error
 	sas.currentPageType, err = sas.readInt(page_type_offset+bitOffset, page_type_length)
 	if err != nil {
-		return fmt.Errorf("Unable to read page type value.")
+		return fmt.Errorf("unable to read page type value")
 	}
 	sas.currentPageBlockCount, err = sas.readInt(block_count_offset+bitOffset, block_count_length)
 	if err != nil {
-		return fmt.Errorf("Unable to read block count value.")
+		return fmt.Errorf("unable to read block count value")
 	}
 	sas.currentPageSubheadersCount, err = sas.readInt(subheader_count_offset+bitOffset, subheader_count_length)
 	if err != nil {
-		return fmt.Errorf("Unable to read subheader count value.")
+		return fmt.Errorf("unable to read subheader count value")
 	}
 
 	return nil
@@ -1083,7 +1085,7 @@ func (sas *SAS7BDAT) processPageMetadata() error {
 		subheader_index, err := sas.getSubheaderIndex(subheader_signature,
 			pointer.compression, pointer.ptype)
 		if err != nil {
-			return fmt.Errorf("unknown subheader: %v\n", subheader_signature)
+			return fmt.Errorf("unknown subheader: %v", subheader_signature)
 		}
 		err = sas.processSubheader(subheader_index, pointer)
 		if err != nil {
@@ -1156,25 +1158,25 @@ func (sas *SAS7BDAT) processSubheaderPointers(offset, subheaderPointerIndex int)
 
 	subheaderOffset, err := sas.readInt(totalOffset, length)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read subheader offset value.")
+		return nil, fmt.Errorf("unable to read subheader offset value")
 	}
 	totalOffset += length
 
 	subheaderLength, err := sas.readInt(totalOffset, length)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read subheader length value.")
+		return nil, fmt.Errorf("unable to read subheader length value")
 	}
 	totalOffset += length
 
 	subheaderCompression, err := sas.readInt(totalOffset, 1)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read subheader compression value.")
+		return nil, fmt.Errorf("unable to read subheader compression value")
 	}
 	totalOffset++
 
 	subheaderType, err := sas.readInt(totalOffset, 1)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read subheader type value.")
+		return nil, fmt.Errorf("unable to read subheader type value")
 	}
 
 	return &subheaderPointer{subheaderOffset, subheaderLength, subheaderCompression, subheaderType}, nil
@@ -1330,7 +1332,7 @@ func (sas *SAS7BDAT) processColumnTextSubheader(offset, length int) error {
 
 	err := sas.readBytes(offset, textBlockSize)
 	if err != nil {
-		return fmt.Errorf("Cannot read column names strings.")
+		return fmt.Errorf("cannot read column names strings")
 	}
 	sas.columnNamesStrings = append(sas.columnNamesStrings, string(sas.buf[0:textBlockSize]))
 
@@ -1406,15 +1408,15 @@ func (sas *SAS7BDAT) processColumnNameSubheader(offset, length int) error {
 
 		idx, err := sas.readInt(text_subheader, column_name_text_subheader_length)
 		if err != nil {
-			return fmt.Errorf("Unable to read text subheader for column name.")
+			return fmt.Errorf("unable to read text subheader for column name")
 		}
 		col_offset, err := sas.readInt(col_name_offset, column_name_offset_length)
 		if err != nil {
-			return fmt.Errorf("Unable to read column_name offset.")
+			return fmt.Errorf("unable to read column_name offset")
 		}
 		col_len, err := sas.readInt(col_name_length, column_name_length_length)
 		if err != nil {
-			return fmt.Errorf("Unable to read column name length.")
+			return fmt.Errorf("unable to read column name length")
 		}
 
 		name_str := sas.columnNamesStrings[idx]
@@ -1540,7 +1542,7 @@ func (sas *SAS7BDAT) parseMetadata() error {
 			return err
 		}
 		if n != sas.properties.pageLength {
-			return fmt.Errorf("Failed to read a meta data page from the SAS file.")
+			return fmt.Errorf("failed to read a meta data page from the SAS file")
 		}
 		var done bool
 		if done, err = sas.processPageMeta(); err != nil {

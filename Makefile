@@ -30,19 +30,20 @@ mac-deps: common-deps ## Install dependencies on mac.
 
 .PHONY: linux-deps
 linux-deps: common-deps ## Install dependencies on linux
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.58.2
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.11.3
 
 # NOTE: docker variant runs much slower
-# docker run -t --rm -v $$(pwd):/app -v ~/.cache/golangci-lint/v1.58.2:/root/.cache -w /app golangci/golangci-lint:v1.58.2 golangci-lint run -v
+# docker run -t --rm -v $$(pwd):/app -v ~/.cache/golangci-lint/v2.11.3:/root/.cache -w /app golangci/golangci-lint:v2.11.3 golangci-lint run -v
 .PHONY: lint
 lint: golangci-lint
-	@requiredver="1.58.2"; \
+	@requiredver="2.11.3"; \
 	lintver=$$(golangci-lint version | sed "s/^.*has version \([0-9.]*\) .*/\1/"); \
  	if [ "$${lintver}" != "$${requiredver}" ] && [ "$$(printf '%s\n' "$$requiredver" "$$lintver" | sort -V | head -n1)" = "$$lintver" ]; then \
         echo "Linter is $${lintver}, but must be at least $${requiredver} to match CI. Upgrade golangci-lint" && exit 1; \
  	fi;
 	@echo "=== Running golangci-lint ==="
-	golangci-lint --timeout 5m run -v --out-format line-number:stdout --fix
+	golangci-lint --timeout 5m run -v --fix
+
 
 .PHONY: test-short
 test-short: build gotestsum
