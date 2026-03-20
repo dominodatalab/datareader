@@ -15,13 +15,12 @@ import (
 )
 
 const (
-	// Leave false when testing
+	// Leave false when testing.
 	generateColumnize = false
 )
 
 // Not really a test function, used to generate md5 sums for the results.
 func TestGenerateColumnize(t *testing.T) {
-
 	if !generateColumnize {
 		return
 	}
@@ -51,12 +50,11 @@ func TestGenerateColumnize(t *testing.T) {
 	if _, err := cf.Write(b); err != nil {
 		panic(err)
 	}
-	//nolint:errcheck // test code doesn't need to check for Close() errors
+
 	cf.Close()
 }
 
 func columnizeBase(fname, mode string) [16]byte {
-
 	// Clear the workspace and set up the subdirectories.
 	outpath := filepath.Join("test_files", "tmp", "cols")
 	if err := os.RemoveAll(outpath); err != nil {
@@ -101,7 +99,7 @@ func columnizeBase(fname, mode string) [16]byte {
 		if err != nil {
 			panic(err)
 		}
-		//nolint:errcheck // test code doesn't need to check for Close() errors
+
 		defer g.Close()
 
 		ba, err := io.ReadAll(g)
@@ -118,7 +116,6 @@ func columnizeBase(fname, mode string) [16]byte {
 }
 
 func TestColumnize1(t *testing.T) {
-
 	if generateColumnize {
 		return
 	}
@@ -127,7 +124,7 @@ func TestColumnize1(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	//nolint:errcheck // test code doesn't need to check for Close() errors
+
 	defer cf.Close()
 
 	// Read the stored checksums
@@ -144,7 +141,6 @@ func TestColumnize1(t *testing.T) {
 
 	for _, f := range allTestFiles {
 		for _, mode := range []string{"text", "binary"} {
-
 			m := columnizeBase(f, mode)
 			m1 := checksum[f+"::"+mode]
 

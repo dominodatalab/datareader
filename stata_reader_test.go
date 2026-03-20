@@ -10,13 +10,12 @@ import (
 )
 
 func stataBaseTest(fnameCsv, fnameStata string) bool {
-
 	f, err := os.Open(filepath.Join("test_files", "data", fnameCsv))
 	if err != nil {
 		logerr(err)
 		return false
 	}
-	//nolint:errcheck // test code doesn't need to check for Close() errors
+
 	defer f.Close()
 
 	rt := NewCSVReader(f)
@@ -37,7 +36,7 @@ func stataBaseTest(fnameCsv, fnameStata string) bool {
 		logerr(err)
 		return false
 	}
-	//nolint:errcheck // test code doesn't need to check for Close() errors
+
 	defer r.Close()
 	stata.InsertCategoryLabels = false
 
@@ -61,13 +60,13 @@ func stataBaseTest(fnameCsv, fnameStata string) bool {
 		return false
 	}
 
-	for j := 0; j < len(ds); j++ {
+	for j := range ds {
 		ds[j].UpcastNumeric()
 	}
 
 	formats := stata.Formats
 	base := time.Date(1960, 1, 1, 0, 0, 0, 0, time.UTC)
-	for j := 0; j < len(ds); j++ {
+	for j := range ds {
 		ds[j] = ds[j].UpcastNumeric()
 		if strings.Contains(formats[j], "%td") {
 			dt[j] = dt[j].ForceNumeric()
@@ -98,11 +97,9 @@ func stataBaseTest(fnameCsv, fnameStata string) bool {
 }
 
 func TestStata1(t *testing.T) {
-
 	fnames := []string{"test1_115.dta", "test1_115b.dta", "test1_117.dta", "test1_118.dta"}
 
 	for _, fname := range fnames {
-
 		r := stataBaseTest("test1.csv", fname)
 		if !r {
 			fmt.Printf("Failed on file '%s'", fname)
@@ -112,11 +109,9 @@ func TestStata1(t *testing.T) {
 }
 
 func TestStata2(t *testing.T) {
-
 	fnames := []string{"test2_115.dta", "test2_115b.dta", "test2_117.dta", "test2_118.dta"}
 
 	for _, fname := range fnames {
-
 		r := stataBaseTest("test2.csv", fname)
 		if !r {
 			fmt.Printf("Failed on file '%s'", fname)

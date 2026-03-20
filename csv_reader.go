@@ -2,6 +2,7 @@ package datareader
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -44,7 +45,7 @@ type CSVReader struct {
 	csvreader *csv.Reader
 
 	// Workspace
-	dataArray []interface{}
+	dataArray []any
 	miss      [][]bool
 	numRows   int
 }
@@ -52,7 +53,6 @@ type CSVReader struct {
 // NewCSVReader returns a CSVReader that reads CSV data from the given io.reader,
 // with type inference and chunking.
 func NewCSVReader(r io.Reader) *CSVReader {
-
 	rdr := new(CSVReader)
 	rdr.HasHeader = true
 	rdr.reader = &r
@@ -64,7 +64,6 @@ func NewCSVReader(r io.Reader) *CSVReader {
 }
 
 func (rdr *CSVReader) getColumnNames() error {
-
 	if rdr.HasHeader {
 		rdr.ColumnNames = rdr.lines[0]
 		rdr.lines = rdr.lines[1:]
@@ -74,7 +73,7 @@ func (rdr *CSVReader) getColumnNames() error {
 	// Default names
 	m := len(rdr.lines[0])
 	rdr.ColumnNames = make([]string, m)
-	for k := 0; k < m; k++ {
+	for k := range m {
 		rdr.ColumnNames[k] = fmt.Sprintf("Column %d", k+1)
 	}
 
@@ -82,12 +81,10 @@ func (rdr *CSVReader) getColumnNames() error {
 }
 
 func (rdr *CSVReader) sniffTypes() {
-
 	nFloats, nObs := rdr.countFloats()
 
 	rdr.DataTypes = make([]string, len(rdr.ColumnNames))
 	for j, col := range rdr.ColumnNames {
-
 		// Check for a type hint
 		t := "infer"
 		tm, ok := rdr.TypeHintsName[col]
@@ -112,7 +109,6 @@ func (rdr *CSVReader) sniffTypes() {
 }
 
 func (rdr *CSVReader) rectifyLines() {
-
 	mx := 0
 
 	for _, line := range rdr.lines {
@@ -123,7 +119,6 @@ func (rdr *CSVReader) rectifyLines() {
 
 	for _, line := range rdr.lines {
 		for len(line) < mx {
-
 			line = append(line, "")
 		}
 	}
@@ -131,7 +126,6 @@ func (rdr *CSVReader) rectifyLines() {
 
 // init performs some initializations before reading data.
 func (rdr *CSVReader) init() error {
-
 	// Read up to 100 lines.
 	rdr.lines = make([][]string, 0, 100)
 	for k := 0; k < 100+rdr.SkipRows; k++ {
@@ -149,7 +143,7 @@ func (rdr *CSVReader) init() error {
 	rdr.rectifyLines()
 
 	if len(rdr.lines) == 0 {
-		return fmt.Errorf("file appears to be empty")
+		return errors.New("file appears to be empty")
 	}
 
 	if rdr.ColumnNames == nil {
@@ -169,7 +163,6 @@ func (rdr *CSVReader) init() error {
 }
 
 func (rdr *CSVReader) ensureWidth(w int) {
-
 	if len(rdr.ColumnNames) >= w {
 		return
 	}
@@ -179,7 +172,7 @@ func (rdr *CSVReader) ensureWidth(w int) {
 		rdr.DataTypes = append(rdr.DataTypes, "string")
 	}
 
-	for j := 0; j < w; j++ {
+	for j := range w {
 		if len(rdr.dataArray) <= j {
 			switch rdr.DataTypes[j] {
 			case "float64":
@@ -202,7 +195,6 @@ func (rdr *CSVReader) ensureWidth(w int) {
 // Use type hints in the CSVReader struct to control the types
 // directly.
 func (rdr *CSVReader) Read(lines int) ([]*Series, error) {
-
 	if !rdr.initRun {
 		err := rdr.init()
 		if err != nil {
@@ -210,7 +202,7 @@ func (rdr *CSVReader) Read(lines int) ([]*Series, error) {
 		}
 	}
 
-	rdr.dataArray = make([]interface{}, len(rdr.ColumnNames))
+	rdr.dataArray = make([]any, len(rdr.ColumnNames))
 	rdr.miss = make([][]bool, len(rdr.ColumnNames))
 	for j := range rdr.ColumnNames {
 		switch rdr.DataTypes[j] {
@@ -223,7 +215,6 @@ func (rdr *CSVReader) Read(lines int) ([]*Series, error) {
 	}
 
 	for lines <= 0 || rdr.numRows < lines {
-
 		var line []string
 		var err error
 		if len(rdr.lines) > 0 {
@@ -288,7 +279,6 @@ func (rdr *CSVReader) Read(lines int) ([]*Series, error) {
 // countFloats returns the number of elements of each column of array
 // that can be converted to float64 type.
 func (rdr *CSVReader) countFloats() ([]int, []int) {
-
 	// Find the longest record in the cache
 	m := 0
 	for _, v := range rdr.lines {

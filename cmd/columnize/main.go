@@ -15,13 +15,13 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/dominodatalab/datareader"
 )
 
 func doSplit(rdr datareader.StatfileReader, colDir string, mode string) {
-
 	ncol := len(rdr.ColumnNames())
 	columns := make([]io.Writer, ncol)
 
@@ -46,7 +46,7 @@ func doSplit(rdr datareader.StatfileReader, colDir string, mode string) {
 
 	// Create a writer for each column
 	for j := range rdr.ColumnNames() {
-		fn := filepath.Join(colDir, fmt.Sprintf("%d", j))
+		fn := filepath.Join(colDir, strconv.Itoa(j))
 		f, err := os.Create(fn)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "unable to create file for column %d: %v\n", j, err)
@@ -67,15 +67,15 @@ func doSplit(rdr datareader.StatfileReader, colDir string, mode string) {
 		}
 
 		missing := make([][]bool, ncol)
-		for j := 0; j < ncol; j++ {
+		for j := range ncol {
 			missing[j] = chunk[j].Missing()
 		}
 
-		for j := 0; j < len(chunk); j++ {
+		for j := range chunk {
 			chunk[j].UpcastNumeric()
 		}
 
-		for j := 0; j < ncol; j++ {
+		for j := range ncol {
 			ds := chunk[j].Data()
 			switch vec := ds.(type) {
 			case []float64:
@@ -126,7 +126,6 @@ func doSplit(rdr datareader.StatfileReader, colDir string, mode string) {
 }
 
 func main() {
-
 	if len(os.Args) != 4 {
 		fmt.Fprintf(os.Stderr, "usage: %s -in=file -out=directory -mode=[text|binary]\n", os.Args[0])
 		return

@@ -14,7 +14,6 @@ import (
 // runStattocsv runs stattocsv on all the files in the test_files
 // directory, and calculates an md5 checksum on each output file.
 func runStattocsv(filenames []string) map[string][16]byte {
-
 	checksums := make(map[string][16]byte)
 
 	cmdName := "./stattocsv"
@@ -35,11 +34,9 @@ func runStattocsv(filenames []string) map[string][16]byte {
 }
 
 func refChecksums(filenames []string) map[string][16]byte {
-
 	checksums := make(map[string][16]byte)
 
 	for _, file := range filenames {
-
 		file1 := strings.Replace(file, ".dta", ".csv", 1)
 		file1 = strings.Replace(file1, ".sas7bdat", ".csv", 1)
 
@@ -72,7 +69,6 @@ func refChecksums(filenames []string) map[string][16]byte {
 }
 
 func getFilenames() []string {
-
 	files, err := os.ReadDir(filepath.Join("test_files", "data"))
 	if err != nil {
 		panic(err)
@@ -90,14 +86,12 @@ func getFilenames() []string {
 }
 
 func TestStattocsv1(t *testing.T) {
-
 	testFiles := getFilenames()
 	newChecksums := runStattocsv(testFiles)
 	oldChecksums := refChecksums(testFiles)
 
 	for ky := range oldChecksums {
-
-		for j := 0; j < 16; j++ {
+		for j := range 16 {
 			if newChecksums[ky][j] != oldChecksums[ky][j] {
 				fmt.Printf("%v\n%v\n%v\n\n", ky, newChecksums[ky], oldChecksums[ky])
 				t.Fail()

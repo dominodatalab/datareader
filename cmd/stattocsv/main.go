@@ -15,7 +15,6 @@ import (
 )
 
 func main() {
-
 	if len(os.Args) == 1 {
 		fmt.Printf("usage: %s filename\n", os.Args[0])
 		return

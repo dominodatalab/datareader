@@ -1,6 +1,7 @@
 package datareader
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -20,7 +21,7 @@ type Series struct {
 	length int
 
 	// The data, must be a slice of primitives, e.g. []float64.
-	data interface{}
+	data any
 
 	// Indicators that data values are missing.  If nil, there are
 	// no missing values.
@@ -30,8 +31,7 @@ type Series struct {
 // ilen returns the length of a slice, held in an interface value.
 // If the interface does not hold a slice of a known type, an error
 // is returned.
-func ilen(data interface{}) (int, error) {
-
+func ilen(data any) (int, error) {
 	switch v := data.(type) {
 	case []float64:
 		return len(v), nil
@@ -52,14 +52,13 @@ func ilen(data interface{}) (int, error) {
 	case []time.Time:
 		return len(v), nil
 	default:
-		return 0, fmt.Errorf("unknown data type")
+		return 0, errors.New("unknown data type")
 	}
 }
 
 // NewSeries returns a new Series value with the given name and data
 // contents.  The data slice parameter is not copied.
-func NewSeries(name string, data interface{}, missing []bool) (*Series, error) {
-
+func NewSeries(name string, data any, missing []bool) (*Series, error) {
 	length, err := ilen(data)
 	if err != nil {
 		return nil, err
@@ -82,7 +81,6 @@ func (ser *Series) Write(w io.Writer) {
 
 // WriteRange writes the given subinterval of the Series to the given writer.
 func (ser *Series) WriteRange(w io.Writer, first, last int) {
-
 	if _, err := io.WriteString(w, fmt.Sprintf("Name: %s\n", ser.Name)); err != nil {
 		panic(err)
 	}
@@ -234,7 +232,7 @@ func (ser *Series) PrintRange(first, last int) {
 }
 
 // Data returns the data component of the Series.
-func (ser *Series) Data() interface{} {
+func (ser *Series) Data() any {
 	return ser.data
 }
 
@@ -255,7 +253,6 @@ func (ser *Series) Length() int {
 // but are not equal, AllClose returns false, j, where j is the index
 // of the first position where the two series differ.
 func (ser *Series) AllClose(other *Series, tol float64) (bool, int) {
-
 	if ser.length != other.length {
 		return false, -1
 	}
@@ -402,7 +399,6 @@ func (ser *Series) AllEqual(other *Series) (bool, int) {
 // UpcastNumeric converts in-place all numeric type variables to
 // float64 values.  Non-numeric data is not affected.
 func (ser *Series) UpcastNumeric() *Series {
-
 	n := ser.Length()
 	cmiss := ser.missing
 	if cmiss != nil {
@@ -411,7 +407,6 @@ func (ser *Series) UpcastNumeric() *Series {
 	}
 
 	switch ser.data.(type) {
-
 	default:
 		panic(fmt.Sprintf("unknown data type: %T\n", ser.data))
 	case []float64:
@@ -424,7 +419,7 @@ func (ser *Series) UpcastNumeric() *Series {
 		d := ser.data.([]float32)
 		n := len(d)
 		a := make([]float64, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			a[i] = float64(d[i])
 		}
 		s, _ := NewSeries(ser.Name, a, cmiss)
@@ -433,7 +428,7 @@ func (ser *Series) UpcastNumeric() *Series {
 		d := ser.data.([]int64)
 		n := len(d)
 		a := make([]float64, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			a[i] = float64(d[i])
 		}
 		s, _ := NewSeries(ser.Name, a, cmiss)
@@ -442,7 +437,7 @@ func (ser *Series) UpcastNumeric() *Series {
 		d := ser.data.([]int32)
 		n := len(d)
 		a := make([]float64, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			a[i] = float64(d[i])
 		}
 		ser.data = a
@@ -452,7 +447,7 @@ func (ser *Series) UpcastNumeric() *Series {
 		d := ser.data.([]int16)
 		n := len(d)
 		a := make([]float64, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			a[i] = float64(d[i])
 		}
 		ser.data = a
@@ -462,7 +457,7 @@ func (ser *Series) UpcastNumeric() *Series {
 		d := ser.data.([]int8)
 		n := len(d)
 		a := make([]float64, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			a[i] = float64(d[i])
 		}
 		ser.data = a
@@ -475,7 +470,6 @@ func (ser *Series) UpcastNumeric() *Series {
 // missing values where the conversion is not possible.  If the data
 // is not string type, it is unaffected.
 func (ser *Series) ForceNumeric() *Series {
-
 	n := ser.length
 	cmiss := make([]bool, n)
 	if ser.missing != nil {
@@ -488,7 +482,7 @@ func (ser *Series) ForceNumeric() *Series {
 	case []string:
 		x := make([]float64, n)
 		y := ser.data.([]string)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			if !cmiss[i] {
 				v, err := strconv.ParseFloat(y[i], 64)
 				if err != nil {
@@ -505,7 +499,6 @@ func (ser *Series) ForceNumeric() *Series {
 
 // CountMissing returns the number of missing values in the Series.
 func (ser *Series) CountMissing() int {
-
 	m := 0
 	for i := 0; i < ser.length; i++ {
 		if ser.missing[i] {
@@ -520,7 +513,6 @@ func (ser *Series) CountMissing() int {
 // if the series holds string values.  Otherwise calling this method has
 // no effect.
 func (ser *Series) StringFunc(f func(string) string) *Series {
-
 	n := ser.length
 	cmiss := make([]bool, n)
 	if ser.missing != nil {
@@ -544,7 +536,6 @@ func (ser *Series) StringFunc(f func(string) string) *Series {
 // ToString returns a Series with string values, derived
 // from the given series.
 func (ser *Series) ToString() *Series {
-
 	n := ser.length
 	cmiss := make([]bool, n)
 	if ser.missing != nil {
@@ -557,7 +548,7 @@ func (ser *Series) ToString() *Series {
 	case []time.Time:
 		x := make([]string, n)
 		y := ser.data.([]time.Time)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			if !cmiss[i] {
 				x[i] = y[i].UTC().Format("2006-01-02 15:04:05")
 			}
@@ -569,7 +560,7 @@ func (ser *Series) ToString() *Series {
 	case []float64:
 		x := make([]string, n)
 		y := ser.data.([]float64)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			if !cmiss[i] {
 				x[i] = fmt.Sprintf("%v", y[i])
 			}
@@ -584,7 +575,6 @@ func (ser *Series) ToString() *Series {
 // method is applied to a series that is not of string type,
 // the series is returned unchanged.
 func (ser *Series) NullStringMissing() *Series {
-
 	n := ser.length
 	cmiss := make([]bool, n)
 	if ser.missing != nil {
@@ -598,7 +588,7 @@ func (ser *Series) NullStringMissing() *Series {
 		x := make([]string, n)
 		y := ser.data.([]string)
 		copy(x, y)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			if len(x[i]) == 0 {
 				cmiss[i] = true
 			}
@@ -621,14 +611,13 @@ type SeriesArray []*Series
 // of columns, returns (false, -1, -1).  If column j of the two
 // SeriesArray objects have different lengths, returns (false, j, -1).
 // If column j of the two SeriesArray objects have different types,
-// returns (false, j, -2)
+// returns (false, j, -2).
 func (ser SeriesArray) AllClose(other []*Series, tol float64) (bool, int, int) {
-
 	if len(ser) != len(other) {
 		return false, -1, -1
 	}
 
-	for j := 0; j < len(ser); j++ {
+	for j := range ser {
 		f, i := ser[j].AllClose(other[j], tol)
 		if !f {
 			return false, j, i
@@ -646,7 +635,6 @@ func (ser SeriesArray) AllEqual(other []*Series) (bool, int, int) {
 // DateFromDuration returns a new Series in which the data are dates, derived
 // from a given duration value.  Currently, units must be "days".
 func (ser *Series) DateFromDuration(base time.Time, units string) (*Series, error) {
-
 	n := ser.Length()
 
 	var miss []bool
@@ -661,10 +649,10 @@ func (ser *Series) DateFromDuration(base time.Time, units string) (*Series, erro
 	}
 
 	newdate := make([]time.Time, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		switch units {
 		default:
-			return nil, fmt.Errorf("unknown time unit duration")
+			return nil, errors.New("unknown time unit duration")
 		case "days":
 			if miss == nil || !miss[i] {
 				newdate[i] = base.Add(time.Hour * time.Duration(24*td[i]))
@@ -683,7 +671,6 @@ func (ser *Series) DateFromDuration(base time.Time, units string) (*Series, erro
 // AsFloat64Slice returns the data of the series as a float64 slice,
 // and a boolean slice for the missing value indicators.
 func (ser *Series) AsFloat64Slice() ([]float64, []bool, error) {
-
 	v, ok := ser.data.([]float64)
 	if !ok {
 		return nil, nil, fmt.Errorf("can't convert %T to []float64", ser.data)
@@ -695,7 +682,6 @@ func (ser *Series) AsFloat64Slice() ([]float64, []bool, error) {
 // AsUint64Slice returns the data of the series as a uint64 slice,
 // and a boolean slice for the missing value indicators.
 func (ser *Series) AsUint64Slice() ([]uint64, []bool, error) {
-
 	v, ok := ser.data.([]uint64)
 	if !ok {
 		return nil, nil, fmt.Errorf("can't convert %T to []uint64", ser.data)
@@ -707,7 +693,6 @@ func (ser *Series) AsUint64Slice() ([]uint64, []bool, error) {
 // AsStringSlice returns the series data as slices for the values,
 // and the missing data indicators.
 func (ser *Series) AsStringSlice() ([]string, []bool, error) {
-
 	v, ok := ser.data.([]string)
 	if !ok {
 		return nil, nil, fmt.Errorf("can't convert %T to []string", ser.data)

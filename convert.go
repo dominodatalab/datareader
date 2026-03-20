@@ -24,7 +24,7 @@ func ToCsv(rdr StatfileReader, rows int, w *csv.Writer) error {
 			break
 		}
 
-		for j := 0; j < len(chunk); j++ {
+		for j := range chunk {
 			chunk[j] = chunk[j].UpcastNumeric()
 		}
 

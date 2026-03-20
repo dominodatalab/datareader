@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -157,7 +158,6 @@ func (rdr *StataReader) ColumnTypes() []ColumnTypeT {
 }
 
 func (rdr *StataReader) init() error {
-
 	var err error
 
 	// Determine if we have <117 or >=117 dta version.
@@ -275,7 +275,6 @@ func (rdr *StataReader) readExpansionFields() error {
 
 // readInt reads a 1, 2, 4 or 8 byte signed integer.
 func (rdr *StataReader) readInt(width int) (int, error) {
-
 	switch width {
 	default:
 		return 0, fmt.Errorf("unsupported width %d in readInt", width)
@@ -312,7 +311,6 @@ func (rdr *StataReader) readInt(width int) (int, error) {
 
 // readUint reads a 1, 2, 4 or 8 byte unsigned integer.
 func (rdr *StataReader) readUint(width int) (int, error) {
-
 	switch width {
 	default:
 		panic("unsupported width in readUint")
@@ -347,9 +345,8 @@ func (rdr *StataReader) readUint(width int) (int, error) {
 	}
 }
 
-// readOldHeader reads the pre version 117 header
+// readOldHeader reads the pre version 117 header.
 func (rdr *StataReader) readOldHeader() error {
-
 	if _, err := rdr.reader.Seek(0, 0); err != nil {
 		logerr(err)
 		return err
@@ -408,7 +405,7 @@ func (rdr *StataReader) readOldHeader() error {
 		return err
 	}
 	if n != 81 {
-		return fmt.Errorf("stata file appears to be truncated")
+		return errors.New("stata file appears to be truncated")
 	}
 	rdr.DatasetLabel = string(partition(buf[0:81]))
 
@@ -419,7 +416,7 @@ func (rdr *StataReader) readOldHeader() error {
 		return err
 	}
 	if n != 18 {
-		return fmt.Errorf("stata file appears to be truncated")
+		return errors.New("stata file appears to be truncated")
 	}
 	rdr.TimeStamp = string(partition(buf[0:18]))
 
@@ -427,18 +424,11 @@ func (rdr *StataReader) readOldHeader() error {
 }
 
 func (rdr *StataReader) supportedVersion() bool {
-
-	for _, v := range supportedDtaVersions {
-		if rdr.FormatVersion == v {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(supportedDtaVersions, rdr.FormatVersion)
 }
 
 // readNewHeader reads a new-style xml header (versions 117+).
 func (rdr *StataReader) readNewHeader() error {
-
 	buf := make([]byte, 500)
 	var n8 uint8
 
@@ -449,10 +439,10 @@ func (rdr *StataReader) readNewHeader() error {
 		return err
 	}
 	if n != 28 {
-		return fmt.Errorf("file appears to be truncated")
+		return errors.New("file appears to be truncated")
 	}
 	if string(buf[0:11]) != "<stata_dta>" {
-		return fmt.Errorf("invalid Stata file")
+		return errors.New("invalid Stata file")
 	}
 
 	// Stata file version
@@ -467,7 +457,7 @@ func (rdr *StataReader) readNewHeader() error {
 	}
 	rdr.FormatVersion = int(x)
 	if !rdr.supportedVersion() {
-		return fmt.Errorf("invalid Stata dta format version")
+		return errors.New("invalid Stata dta format version")
 	}
 
 	// </release><byteorder>
@@ -531,7 +521,7 @@ func (rdr *StataReader) readNewHeader() error {
 		return err
 	}
 	if n != w {
-		return fmt.Errorf("stata file appears to be truncated")
+		return errors.New("stata file appears to be truncated")
 	}
 	rdr.DatasetLabel = string(buf[0:w])
 
@@ -553,7 +543,7 @@ func (rdr *StataReader) readNewHeader() error {
 		return err
 	}
 	if n != int(n8) {
-		logerr(fmt.Errorf("stata file appears to be truncated"))
+		logerr(errors.New("stata file appears to be truncated"))
 		return err
 	}
 	rdr.TimeStamp = string(buf[0:n8])
@@ -600,7 +590,6 @@ func (rdr *StataReader) readNewHeader() error {
 }
 
 func (rdr *StataReader) readVartypes() error {
-
 	var err error
 
 	switch rdr.FormatVersion {
@@ -620,7 +609,6 @@ func (rdr *StataReader) readVartypes() error {
 }
 
 func (rdr *StataReader) readVartypes16() error {
-
 	if _, err := rdr.reader.Seek(rdr.seekVartypes+16, 0); err != nil {
 		logerr(err)
 		return err
@@ -640,7 +628,6 @@ func (rdr *StataReader) readVartypes16() error {
 }
 
 func (rdr *StataReader) readVartypes8() error {
-
 	rdr.varTypes = make([]ColumnTypeT, rdr.Nvar)
 	for k := range rdr.varTypes {
 		v, err := rdr.readUint(1)
@@ -655,7 +642,6 @@ func (rdr *StataReader) readVartypes8() error {
 }
 
 func (rdr *StataReader) translateVartypes() error {
-
 	for k := 0; k < int(rdr.Nvar); k++ {
 		switch {
 		case rdr.varTypes[k] <= 244:
@@ -672,7 +658,7 @@ func (rdr *StataReader) translateVartypes() error {
 		case rdr.varTypes[k] == 255:
 			rdr.varTypes[k] = StataFloat64Type
 		default:
-			return fmt.Errorf("unknown variable type")
+			return errors.New("unknown variable type")
 		}
 	}
 
@@ -680,7 +666,6 @@ func (rdr *StataReader) translateVartypes() error {
 }
 
 func (rdr *StataReader) readFormats() error {
-
 	var err error
 
 	switch rdr.FormatVersion {
@@ -704,7 +689,6 @@ func (rdr *StataReader) readFormats() error {
 }
 
 func (rdr *StataReader) doReadFormats(bufsize int, seek bool) error {
-
 	buf := make([]byte, bufsize)
 	if seek {
 		if _, err := rdr.reader.Seek(rdr.seekFormats+9, 0); err != nil {
@@ -747,7 +731,6 @@ func partition(b []byte) []byte {
 // readVarnames dispatches to the correct function for reading
 // variable names for the dta file format.
 func (rdr *StataReader) readVarnames() error {
-
 	var err error
 	switch rdr.FormatVersion {
 	case 118:
@@ -769,7 +752,6 @@ func (rdr *StataReader) readVarnames() error {
 }
 
 func (rdr *StataReader) doReadVarnames(bufsize int, seek bool) error {
-
 	buf := make([]byte, bufsize)
 	if seek {
 		_, err := rdr.reader.Seek(rdr.seekVarnames+10, 0)
@@ -786,7 +768,7 @@ func (rdr *StataReader) doReadVarnames(bufsize int, seek bool) error {
 			return err
 		}
 		if n != bufsize {
-			return fmt.Errorf("stata file appears to be truncated")
+			return errors.New("stata file appears to be truncated")
 		}
 		rdr.columnNames[k] = string(partition(buf))
 	}
@@ -795,7 +777,6 @@ func (rdr *StataReader) doReadVarnames(bufsize int, seek bool) error {
 }
 
 func (rdr *StataReader) readValueLabelNames() error {
-
 	var err error
 	switch rdr.FormatVersion {
 	case 118:
@@ -817,7 +798,6 @@ func (rdr *StataReader) readValueLabelNames() error {
 }
 
 func (rdr *StataReader) doReadValueLabelNames(bufsize int, seek bool) error {
-
 	buf := make([]byte, bufsize)
 	if seek {
 		if _, err := rdr.reader.Seek(rdr.seekValueLabelNames+19, 0); err != nil {
@@ -838,7 +818,6 @@ func (rdr *StataReader) doReadValueLabelNames(bufsize int, seek bool) error {
 }
 
 func (rdr *StataReader) readVariableLabels() error {
-
 	var err error
 	switch rdr.FormatVersion {
 	case 118:
@@ -860,7 +839,6 @@ func (rdr *StataReader) readVariableLabels() error {
 }
 
 func (rdr *StataReader) doReadVariableLabels(bufsize int, seek bool) error {
-
 	buf := make([]byte, bufsize)
 	if seek {
 		if _, err := rdr.reader.Seek(rdr.seekVariableLabels+17, 0); err != nil {
@@ -882,7 +860,6 @@ func (rdr *StataReader) doReadVariableLabels(bufsize int, seek bool) error {
 }
 
 func (rdr *StataReader) readValueLabels() error {
-
 	vl := make(map[string]map[int32]string)
 	buf := make([]byte, 321)
 
@@ -961,7 +938,6 @@ func (rdr *StataReader) readValueLabels() error {
 }
 
 func (rdr *StataReader) readStrls() error {
-
 	if _, err := rdr.reader.Seek(rdr.seekStrls+7, 0); err != nil {
 		return err
 	}
@@ -981,7 +957,7 @@ func (rdr *StataReader) readStrls() error {
 
 	for {
 		n, err := rdr.reader.Read(buf3)
-		if n <= 0 || err == io.EOF {
+		if n <= 0 || errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
 			return err
@@ -1027,16 +1003,15 @@ func (rdr *StataReader) readStrls() error {
 			rdr.StrlsBytes[ptr] = make([]byte, length)
 			copy(rdr.StrlsBytes[ptr], buf[0:length])
 		default:
-			return fmt.Errorf("unknown t value")
+			return errors.New("unknown t value")
 		}
 	}
 
 	return nil
 }
 
-func (rdr *StataReader) allocateCols(nval int) []interface{} {
-
-	data := make([]interface{}, rdr.Nvar)
+func (rdr *StataReader) allocateCols(nval int) []any {
+	data := make([]any, rdr.Nvar)
 	for j, t := range rdr.varTypes {
 		switch {
 		case t <= 2045:
@@ -1065,8 +1040,7 @@ func (rdr *StataReader) allocateCols(nval int) []interface{} {
 	return data
 }
 
-func (rdr *StataReader) doInsertCategoryLabels(data []interface{}, missing [][]bool, nval int) {
-
+func (rdr *StataReader) doInsertCategoryLabels(data []any, missing [][]bool, nval int) {
 	for j := 0; j < rdr.Nvar; j++ {
 		labname := rdr.ValueLabelNames[j]
 		mp, ok := rdr.ValueLabels[labname]
@@ -1080,13 +1054,13 @@ func (rdr *StataReader) doInsertCategoryLabels(data []interface{}, missing [][]b
 		}
 
 		newdata := make([]string, nval)
-		for i := 0; i < nval; i++ {
+		for i := range nval {
 			if !missing[j][i] {
 				v, ok := mp[int32(idat[i])]
 				if ok {
 					newdata[i] = v
 				} else {
-					newdata[i] = fmt.Sprintf("%v", idat[i])
+					newdata[i] = strconv.FormatInt(idat[i], 10)
 				}
 			}
 		}
@@ -1094,8 +1068,7 @@ func (rdr *StataReader) doInsertCategoryLabels(data []interface{}, missing [][]b
 	}
 }
 
-func (rdr *StataReader) readRow(i int, buf, buf8 []byte, data []interface{}, missing [][]bool) {
-
+func (rdr *StataReader) readRow(i int, buf, buf8 []byte, data []any, missing [][]bool) {
 	for j := 0; j < rdr.Nvar; j++ {
 		switch t := rdr.varTypes[j]; {
 		case t <= 2045:
@@ -1177,7 +1150,6 @@ func (rdr *StataReader) readRow(i int, buf, buf8 []byte, data []interface{}, mis
 // file.  The data are returned as an array of Series objects.  If
 // rows is negative, the remainder of the file is read.
 func (rdr *StataReader) Read(rows int) ([]*Series, error) {
-
 	// Compute number of values to read
 	nval := int(rdr.rowCount) - rdr.rowsRead
 	if rows >= 0 && rows < nval {
@@ -1202,7 +1174,6 @@ func (rdr *StataReader) Read(rows int) ([]*Series, error) {
 	buf := make([]byte, 2045)
 	buf8 := make([]byte, 8)
 	for i := 0; i < nval; i++ {
-
 		rdr.rowsRead += 1
 		if rdr.rowsRead > int(rdr.rowCount) {
 			break
@@ -1236,8 +1207,7 @@ func (rdr *StataReader) Read(rows int) ([]*Series, error) {
 	return rdata, nil
 }
 
-func (rdr *StataReader) doConvertDates(v interface{}, format string) interface{} {
-
+func (rdr *StataReader) doConvertDates(v any, format string) any {
 	vec, err := upcastNumeric(v)
 	if err != nil {
 		panic(fmt.Sprintf("unable to handle type %T in date vector", v))
