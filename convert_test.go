@@ -30,7 +30,7 @@ func TestToCsvConvertsSAS(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			f, err := os.Open(tt.path)
 			require.NoError(t, err)
-			//nolint:errcheck // test code doesn't need to check for Close() errors
+
 			defer f.Close()
 
 			sas, err := datareader.NewSAS7BDATReader(f)
@@ -59,7 +59,7 @@ func TestToCsvConvertsTruncatedSAS(t *testing.T) {
 	// yes ",,0.000000,,," | head -n "40000" > "test.csv"
 	f, err := os.Open("test_files/data/project_incomplete.sas7bdat")
 	require.NoError(t, err)
-	//nolint:errcheck // test code doesn't need to check for Close() errors
+
 	defer f.Close()
 
 	sas, err := datareader.NewSAS7BDATReader(f)
@@ -69,9 +69,11 @@ func TestToCsvConvertsTruncatedSAS(t *testing.T) {
 
 	// verify all the file header data processed correctly
 	// these values come from complete file project.sas7bdat
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"PROJECT                         \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-		sas.Name)
+		sas.Name,
+	)
 	assert.Equal(t, "DATA    ", sas.FileType)
 	assert.Equal(t, "utf-8", sas.FileEncoding)
 	assert.True(t, sas.U64)
@@ -80,23 +82,23 @@ func TestToCsvConvertsTruncatedSAS(t *testing.T) {
 	assert.Equal(t, "9.0401M6", sas.SASRelease)
 	assert.Equal(t, "Linux", sas.ServerType)
 	assert.Equal(t, 46641, sas.RowCount())
-	assert.Equal(t, sas.ColumnLabels(), []string{
+	assert.Equal(t, []string{
 		"Type of alteration or repair",
 		"Household member performed alteration or repair",
 		"Cost of alteration or repair",
 		"Edit flag for RAS",
 		"Edit flag for RAD",
 		"Control number",
-	})
-	assert.Equal(t, sas.ColumnNames(), []string{"RAS", "RAH", "RAD", "JRAS", "JRAD", "CONTROL"})
-	assert.Equal(t, sas.ColumnTypes(), []datareader.ColumnTypeT{
+	}, sas.ColumnLabels())
+	assert.Equal(t, []string{"RAS", "RAH", "RAD", "JRAS", "JRAD", "CONTROL"}, sas.ColumnNames())
+	assert.Equal(t, []datareader.ColumnTypeT{
 		datareader.SASStringType,
 		datareader.SASStringType,
 		datareader.SASNumericType,
 		datareader.SASStringType,
 		datareader.SASStringType,
 		datareader.SASStringType,
-	})
+	}, sas.ColumnTypes())
 	// Timestamp is epoch 01/01/1960
 	tv := float64(1969085979.342952)
 	ts := time.Date(1960, 1, 1, 0, 0, 0, 0, time.UTC).Add(time.Duration(tv) * time.Second)
@@ -118,7 +120,7 @@ func TestToCsvConvertsTruncatedSAS(t *testing.T) {
 	assert.Equal(t, []string{"62", "2", "1500.000000", "", "", "186336030133"}, records[2604])
 
 	// NOTE: bugfix shows that only the rows that could be read are captured in the file - the write aborts once it reaches incomplete data
-	assert.Equal(t, 2605, len(records))
+	assert.Len(t, records, 2605)
 }
 
 func TestToCsvConvertsStata(t *testing.T) {
@@ -134,7 +136,7 @@ func TestToCsvConvertsStata(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			f, err := os.Open(tt.path)
 			require.NoError(t, err)
-			//nolint:errcheck // test code doesn't need to check for Close() errors
+
 			defer f.Close()
 
 			stata, err := datareader.NewStataReader(f)

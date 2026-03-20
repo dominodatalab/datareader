@@ -8,7 +8,6 @@ import (
 )
 
 func TestCSV1(t *testing.T) {
-
 	file, err := os.Open(filepath.Join("test_files", "data", "testcsv1.csv"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -33,7 +32,6 @@ func TestCSV1(t *testing.T) {
 }
 
 func TestCSV2(t *testing.T) {
-
 	file, err := os.Open(filepath.Join("test_files", "data", "testcsv2.csv"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -59,7 +57,6 @@ func TestCSV2(t *testing.T) {
 }
 
 func TestCSV3(t *testing.T) {
-
 	file, err := os.Open(filepath.Join("test_files", "data", "testcsv2.csv"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -87,7 +84,6 @@ func TestCSV3(t *testing.T) {
 }
 
 func TestCSV4(t *testing.T) {
-
 	file, err := os.Open(filepath.Join("test_files", "data", "testcsv2.csv"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -120,7 +116,6 @@ func TestCSV4(t *testing.T) {
 }
 
 func TestRaggedCSV(t *testing.T) {
-
 	file, err := os.Open(filepath.Join("test_files", "data", "testcsv3.csv"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -135,7 +130,7 @@ func TestRaggedCSV(t *testing.T) {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		t.Fail()
 	}
-	for j := 0; j < len(data); j++ {
+	for j := range data {
 		data[j] = data[j].ForceNumeric()
 	}
 

@@ -8,10 +8,10 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 func gen1(words []string, fname string) {
-
 	r := rand.New(rand.NewSource(99))
 
 	fid, err := os.Create(filepath.Join("data", fname))
@@ -26,16 +26,15 @@ func gen1(words []string, fname string) {
 
 	rowdata := make([]string, ncol)
 
-	for k := 0; k < ncol; k++ {
+	for k := range ncol {
 		rowdata[k] = fmt.Sprintf("Column%d", k+1)
 	}
 	if err := w.Write(rowdata); err != nil {
 		panic(err)
 	}
 
-	for i := 0; i < nrow; i++ {
-
-		for j := 0; j < ncol; j++ {
+	for range nrow {
+		for j := range ncol {
 			switch j % 4 {
 			case 0:
 				if r.Float64() < 0.1 {
@@ -53,14 +52,14 @@ func gen1(words []string, fname string) {
 				if r.Float64() < 0.1 {
 					rowdata[j] = ""
 				} else {
-					rowdata[j] = fmt.Sprintf("%d", r.Int63n(100))
+					rowdata[j] = strconv.FormatInt(r.Int63n(100), 10)
 				}
 			case 3:
 				// dates
 				if r.Float64() < 0.1 {
 					rowdata[j] = ""
 				} else {
-					rowdata[j] = fmt.Sprintf("%d", r.Int63n(10000))
+					rowdata[j] = strconv.FormatInt(r.Int63n(10000), 10)
 				}
 			}
 		}
@@ -74,7 +73,6 @@ func gen1(words []string, fname string) {
 }
 
 func main() {
-
 	words := []string{"apple", "dog", "pear", "crocodile", "banana"}
 	gen1(words, "test1.csv")
 

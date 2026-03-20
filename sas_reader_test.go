@@ -9,13 +9,12 @@ import (
 )
 
 func sasBaseTest(fnameCSV, fnameSAS string, factorizeStrings bool) bool {
-
 	f, err := os.Open(filepath.Join("test_files", "data", fnameCSV))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return false
 	}
-	//nolint:errcheck // test code doesn't need to check for Close() errors
+
 	defer f.Close()
 
 	// Read the whole CSV file
@@ -34,7 +33,7 @@ func sasBaseTest(fnameCSV, fnameSAS string, factorizeStrings bool) bool {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return false
 	}
-	//nolint:errcheck // test code doesn't need to check for Close() errors
+
 	defer r.Close()
 
 	// Set up the SAS reader
@@ -75,7 +74,7 @@ func sasBaseTest(fnameCSV, fnameSAS string, factorizeStrings bool) bool {
 
 	// Convert the dates from the CSV file so that they are comparable to the SAS dates.
 	base := time.Date(1960, 1, 1, 0, 0, 0, 0, time.UTC)
-	for j := 0; j < len(dt); j++ {
+	for j := range dt {
 		if sas.ColumnFormats[j] == "MMDDYY" {
 			dt[j] = dt[j].ForceNumeric()
 			dt[j], err = dt[j].DateFromDuration(base, "days")
@@ -94,13 +93,11 @@ func sasBaseTest(fnameCSV, fnameSAS string, factorizeStrings bool) bool {
 }
 
 func compare(ds, dt []*Series, sas *SAS7BDAT, stringFactorMap map[uint64]string) bool {
-
 	if len(ds) != len(dt) {
 		return false
 	}
 
 	for j := range ds {
-
 		if sas.columnTypes[j] == SASStringType && stringFactorMap != nil {
 			// Compare factored strings
 			x := ds[j].Data().([]uint64)
@@ -139,7 +136,6 @@ func compare(ds, dt []*Series, sas *SAS7BDAT, stringFactorMap map[uint64]string)
 // TestSASGenerated1 tests against a file with ASCII/latin-1 characters.
 // See test_files/data for a CSV version of the data file.
 func TestSASGenerated1(t *testing.T) {
-
 	for k := 1; k < 16; k++ {
 		fname := fmt.Sprintf("test%d.sas7bdat", k)
 		for _, factorizeStrings := range []bool{false, true} {
@@ -155,7 +151,6 @@ func TestSASGenerated1(t *testing.T) {
 // TestSASGenerated2 tests against a file with many non-latin1 characters.
 // See test_files/data for a CSV version of the data file.
 func TestSASGenerated2(t *testing.T) {
-
 	for k := 16; k < 22; k++ {
 		fname := fmt.Sprintf("test%d.sas7bdat", k)
 		for _, factorizeStrings := range []bool{false, true} {

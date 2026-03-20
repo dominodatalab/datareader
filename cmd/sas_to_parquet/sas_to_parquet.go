@@ -123,7 +123,6 @@ func main() {
 )
 
 func writeSchema(cnames []string, ctypes []datareader.ColumnTypeT, pkgname, structname string) {
-
 	var buf bytes.Buffer
 
 	s := fmt.Sprintf("package %s\n\n", pkgname)
@@ -137,7 +136,6 @@ func writeSchema(cnames []string, ctypes []datareader.ColumnTypeT, pkgname, stru
 	}
 
 	for i := range cnames {
-
 		// The go version of the variable name must be exported
 		gname := cases.Title(language.AmericanEnglish).String(cnames[i])
 
@@ -190,7 +188,6 @@ func writeSchema(cnames []string, ctypes []datareader.ColumnTypeT, pkgname, stru
 }
 
 func getImportPath() string {
-
 	dir, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -210,7 +207,6 @@ func getImportPath() string {
 
 func writeCode(cnames []string, ctypes []datareader.ColumnTypeT, pkgname, structname, sasfile,
 	outdir, scriptname, outname string) {
-
 	type vart struct {
 		Name string
 		Type string
@@ -301,7 +297,6 @@ func writeCode(cnames []string, ctypes []datareader.ColumnTypeT, pkgname, struct
 }
 
 func main() {
-
 	sasfile := flag.String("sasfile", "", "Path to the SAS file")
 	structname := flag.String("structname", "", "Name of the struct to create")
 	pkgname := flag.String("pkgname", "", "Name of the package to create")
@@ -343,7 +338,7 @@ func main() {
 		_, _ = io.WriteString(os.Stderr, msg)
 		panic(err)
 	}
-	//nolint:errcheck // test code doesn't need to check for Close() errors
+
 	defer rdr.Close()
 
 	sas, err := datareader.NewSAS7BDATReader(rdr)
