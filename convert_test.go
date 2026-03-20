@@ -30,6 +30,7 @@ func TestToCsvConvertsSAS(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			f, err := os.Open(tt.path)
 			require.NoError(t, err)
+			//nolint:errcheck // test code doesn't need to check for Close() errors
 			defer f.Close()
 
 			sas, err := datareader.NewSAS7BDATReader(f)
@@ -58,6 +59,7 @@ func TestToCsvConvertsTruncatedSAS(t *testing.T) {
 	// yes ",,0.000000,,," | head -n "40000" > "test.csv"
 	f, err := os.Open("test_files/data/project_incomplete.sas7bdat")
 	require.NoError(t, err)
+	//nolint:errcheck // test code doesn't need to check for Close() errors
 	defer f.Close()
 
 	sas, err := datareader.NewSAS7BDATReader(f)
@@ -132,6 +134,7 @@ func TestToCsvConvertsStata(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			f, err := os.Open(tt.path)
 			require.NoError(t, err)
+			//nolint:errcheck // test code doesn't need to check for Close() errors
 			defer f.Close()
 
 			stata, err := datareader.NewStataReader(f)

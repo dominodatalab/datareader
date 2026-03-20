@@ -182,7 +182,11 @@ func writeSchema(cnames []string, ctypes []datareader.ColumnTypeT, pkgname, stru
 	if _, err := out.Write(p); err != nil {
 		panic(err)
 	}
-	defer out.Close()
+	defer func() {
+		if err := out.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "unable to close file %s: %v\n", fname, err)
+		}
+	}()
 }
 
 func getImportPath() string {
@@ -234,12 +238,12 @@ func writeCode(cnames []string, ctypes []datareader.ColumnTypeT, pkgname, struct
 	if outname == "" {
 		// Default parquet file name
 		outname = path.Base(sasfile)
-		e := path.Ext(outname)
-		if e == "" {
-			outname += ".parquet"
-		} else {
-			outname = strings.Replace(outname, e, ".parquet", -1)
+		// remove file extension is present
+		if e := path.Ext(outname); e != "" {
+			// Slice the original path to remove the old extension
+			outname = outname[:len(outname)-len(e)]
 		}
+		outname += ".parquet"
 	}
 	outfile := path.Join(outdir, outname)
 
@@ -289,7 +293,11 @@ func writeCode(cnames []string, ctypes []datareader.ColumnTypeT, pkgname, struct
 		panic(err)
 	}
 
-	out.Close()
+	defer func() {
+		if err := out.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "unable to close file %s: %v\n", scriptname, err)
+		}
+	}()
 }
 
 func main() {
@@ -335,6 +343,7 @@ func main() {
 		_, _ = io.WriteString(os.Stderr, msg)
 		panic(err)
 	}
+	//nolint:errcheck // test code doesn't need to check for Close() errors
 	defer rdr.Close()
 
 	sas, err := datareader.NewSAS7BDATReader(rdr)

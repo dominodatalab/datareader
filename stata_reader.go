@@ -365,7 +365,7 @@ func (rdr *StataReader) readOldHeader() error {
 	}
 	rdr.FormatVersion = int(format)
 	if !rdr.supportedVersion() {
-		return fmt.Errorf("Invalid Stata dta format version: %v\n", rdr.FormatVersion)
+		return fmt.Errorf("invalid Stata dta format version: %v", rdr.FormatVersion)
 	}
 
 	// Get the byte order
@@ -452,7 +452,7 @@ func (rdr *StataReader) readNewHeader() error {
 		return fmt.Errorf("file appears to be truncated")
 	}
 	if string(buf[0:11]) != "<stata_dta>" {
-		return fmt.Errorf("Invalid Stata file")
+		return fmt.Errorf("invalid Stata file")
 	}
 
 	// Stata file version
@@ -467,7 +467,7 @@ func (rdr *StataReader) readNewHeader() error {
 	}
 	rdr.FormatVersion = int(x)
 	if !rdr.supportedVersion() {
-		return fmt.Errorf("Invalid Stata dta format version")
+		return fmt.Errorf("invalid Stata dta format version")
 	}
 
 	// </release><byteorder>
@@ -603,14 +603,14 @@ func (rdr *StataReader) readVartypes() error {
 
 	var err error
 
-	switch {
-	case rdr.FormatVersion == 118:
+	switch rdr.FormatVersion {
+	case 118:
 		err = rdr.readVartypes16()
-	case rdr.FormatVersion == 117:
+	case 117:
 		err = rdr.readVartypes16()
-	case rdr.FormatVersion == 115:
+	case 115:
 		err = rdr.readVartypes8()
-	case rdr.FormatVersion == 114:
+	case 114:
 		err = rdr.readVartypes8()
 	default:
 		err = fmt.Errorf("unknown format version %v", rdr.FormatVersion)
@@ -683,14 +683,14 @@ func (rdr *StataReader) readFormats() error {
 
 	var err error
 
-	switch {
-	case rdr.FormatVersion == 118:
+	switch rdr.FormatVersion {
+	case 118:
 		err = rdr.doReadFormats(57, true)
-	case rdr.FormatVersion == 117:
+	case 117:
 		err = rdr.doReadFormats(49, true)
-	case rdr.FormatVersion == 115:
+	case 115:
 		err = rdr.doReadFormats(49, false)
-	case rdr.FormatVersion == 114:
+	case 114:
 		err = rdr.doReadFormats(49, false)
 	default:
 		err = fmt.Errorf("unknown format version %v", rdr.FormatVersion)
@@ -850,7 +850,7 @@ func (rdr *StataReader) readVariableLabels() error {
 	case 114:
 		err = rdr.doReadVariableLabels(81, false)
 	default:
-		err = fmt.Errorf("Unknown format version %d", rdr.FormatVersion)
+		err = fmt.Errorf("unknown format version %d", rdr.FormatVersion)
 	}
 
 	if err != nil {

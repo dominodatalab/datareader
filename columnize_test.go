@@ -51,6 +51,7 @@ func TestGenerateColumnize(t *testing.T) {
 	if _, err := cf.Write(b); err != nil {
 		panic(err)
 	}
+	//nolint:errcheck // test code doesn't need to check for Close() errors
 	cf.Close()
 }
 
@@ -100,6 +101,7 @@ func columnizeBase(fname, mode string) [16]byte {
 		if err != nil {
 			panic(err)
 		}
+		//nolint:errcheck // test code doesn't need to check for Close() errors
 		defer g.Close()
 
 		ba, err := io.ReadAll(g)
@@ -125,6 +127,7 @@ func TestColumnize1(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	//nolint:errcheck // test code doesn't need to check for Close() errors
 	defer cf.Close()
 
 	// Read the stored checksums

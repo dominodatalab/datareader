@@ -16,6 +16,7 @@ func stataBaseTest(fnameCsv, fnameStata string) bool {
 		logerr(err)
 		return false
 	}
+	//nolint:errcheck // test code doesn't need to check for Close() errors
 	defer f.Close()
 
 	rt := NewCSVReader(f)
@@ -36,6 +37,7 @@ func stataBaseTest(fnameCsv, fnameStata string) bool {
 		logerr(err)
 		return false
 	}
+	//nolint:errcheck // test code doesn't need to check for Close() errors
 	defer r.Close()
 	stata.InsertCategoryLabels = false
 
@@ -79,11 +81,12 @@ func stataBaseTest(fnameCsv, fnameStata string) bool {
 
 	fl, jx, ix := SeriesArray(ds).AllClose(dt, 1e-6)
 	if !fl {
-		if ix == -1 {
+		switch ix {
+		case -1:
 			fmt.Printf("Unequal lengths\n")
-		} else if ix == -2 {
+		case -2:
 			fmt.Printf("Unequal types\n")
-		} else {
+		default:
 			fmt.Printf("Unequal values at column %d row %d\n", jx, ix)
 			ds[jx].Print()
 			dt[jx].Print()
