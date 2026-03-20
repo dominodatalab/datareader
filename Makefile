@@ -1,6 +1,6 @@
 SRC_DIR := $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 
-make_tools := brew gotestsum golangci-lint
+make_tools := brew golangci-lint
 
 $(make_tools):
 	$(shell command -v $@ 2>&1> /dev/null || (echo "ERROR: $@ is required: run 'make deps' to install"; exit 1))
@@ -15,14 +15,13 @@ fmt:
 	go fmt ./...
 
 .PHONY: test-all
-test-all: build gotestsum ## Run all tests
+test-all: build ## Run all tests
 	$(touch .env)
-	gotestsum --format=pkgname-and-test-fails --format-hivis -- -coverprofile=coverage/cover.out ./... --tags="unit"
+	go tool -modfile=tools/go.mod gotestsum --format=pkgname-and-test-fails --format-hivis -- -coverprofile=coverage/cover.out ./... --tags="unit"
 
 .PHONY: common-deps
 common-deps:
 	go install github.com/go-delve/delve/cmd/dlv@latest
-	go install gotest.tools/gotestsum@latest
 
 .PHONY: mac-deps
 mac-deps: common-deps ## Install dependencies on mac.
@@ -46,8 +45,8 @@ lint: golangci-lint
 
 
 .PHONY: test-short
-test-short: build gotestsum
-	gotestsum --format=pkgname-and-test-fails --format-hivis -- -coverprofile=coverage/cover.out ./... -short
+test-short: build
+	go tool -modfile=tools/go.mod gotestsum --format=pkgname-and-test-fails --format-hivis -- -coverprofile=coverage/cover.out ./... -short
 
 .PHONY: test
 test: fmt lint test-all
@@ -56,7 +55,7 @@ test: fmt lint test-all
 test-coverage: build ## Run all tests and generate a coverage report
 	$(touch .env)
 	mkdir -p $(SRC_DIR)coverage
-	gotestsum --format=pkgname-and-test-fails --format-hivis --junitfile test/unit-tests.xml -- -covermode=count -coverpkg=./... -coverprofile=coverage/cover.out.tmp -v  ./... --tags="unit"
+	go tool -modfile=tools/go.mod gotestsum --format=pkgname-and-test-fails --format-hivis --junitfile test/unit-tests.xml -- -covermode=count -coverpkg=./... -coverprofile=coverage/cover.out.tmp -v  ./... --tags="unit"
 
 	# Stripping out API docs and internal/app/mocks from the coverage report
 	cat coverage/cover.out.tmp | grep -v "api/docs.go" | grep -v "mock_" > coverage/cover.out
